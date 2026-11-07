@@ -213,6 +213,8 @@ async function verifyChecksum(asset, file) {
 // Idempotent: a non-empty binary is treated as already installed (the package
 // version pins the release, so existence is sufficient).
 async function ensureBinary() {
+  // Secured fork: neutralize F-002 — prevent all binary downloads.
+  throw new Error('This secure fork does not distribute binaries. Build from source.');
   const dest = binaryPath();
   if (fs.existsSync(dest) && fs.statSync(dest).size > 0) {
     return dest;
