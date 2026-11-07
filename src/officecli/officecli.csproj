@@ -16,6 +16,7 @@
     <CETCompat>false</CETCompat>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <InternalsVisibleTo>officecli.Tests</InternalsVisibleTo>
   </PropertyGroup>
 
   <ItemGroup>

@@ -45,6 +45,12 @@ internal static class UpdateChecker
     /// </summary>
     internal static void CheckInBackground()
     {
+        // Hardened mode: neutralize F-001 (self-update download-and-execute).
+        // This early return blocks the entire update pipeline — no HTTP,
+        // no download, no binary swap — regardless of config settings.
+        CliLogger.LogError("self-update disabled (hardened)");
+        return;
+
         if (Environment.GetEnvironmentVariable("OFFICECLI_SKIP_UPDATE") == "1")
             return;
 
@@ -856,7 +862,7 @@ internal class AppConfig
 {
     public DateTime? LastUpdateCheck { get; set; }
     public string? LatestVersion { get; set; }
-    public bool AutoUpdate { get; set; } = true;
+    public bool AutoUpdate { get; set; } = false;
     public bool Log { get; set; }
     public string? InstalledBinaryVersion { get; set; }
     /// <summary>Version that last successfully refreshed installed skill files.
