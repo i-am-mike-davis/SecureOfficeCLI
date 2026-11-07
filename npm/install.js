@@ -6,6 +6,11 @@
 // install still leaves a working command once connectivity returns. Set
 // OFFICECLI_SKIP_BINARY_DOWNLOAD=1 to skip the download entirely.
 
+// Secured fork: neutralize F-002 (npm postinstall download-and-execute).
+// This early exit prevents all download-and-execute logic below from running.
+process.stderr.write('[officecli] This secure fork does not distribute binaries. Build from source.\n');
+process.exit(0);
+
 if (process.env.OFFICECLI_SKIP_BINARY_DOWNLOAD) {
   process.stderr.write('[officecli] OFFICECLI_SKIP_BINARY_DOWNLOAD set, skipping binary download.\n');
   process.exit(0);
