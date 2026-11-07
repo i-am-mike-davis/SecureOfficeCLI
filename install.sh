@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+# Secured fork: neutralize F-003 — prevent all binary downloads.
+echo "[officecli] This secure fork does not distribute binaries. Build from source instead."
+exit 0
+
 REPO="iOfficeAI/OfficeCLI"
 BINARY_NAME="officecli"
 
