@@ -1,4 +1,8 @@
 $repo = "iOfficeAI/OfficeCLI"
+# Secured fork: neutralize F-003 — prevent all binary downloads.
+Write-Host "[officecli] This secure fork does not distribute binaries. Build from source instead."
+exit 0
+
 # Select the native asset for the machine architecture. PROCESSOR_ARCHITECTURE
 # reports the *current process* arch (x86/AMD64 when an emulated 32/64-bit
 # PowerShell runs on ARM64); PROCESSOR_ARCHITEW6432 then reveals the real ARM64
