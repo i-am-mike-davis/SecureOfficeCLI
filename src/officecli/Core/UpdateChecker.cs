@@ -863,7 +863,7 @@ internal class AppConfig
     public DateTime? LastUpdateCheck { get; set; }
     public string? LatestVersion { get; set; }
     public bool AutoUpdate { get; set; } = false;
-    public bool Log { get; set; }
+    public bool Log { get; set; } = true;
     public string? InstalledBinaryVersion { get; set; }
     /// <summary>Version that last successfully refreshed installed skill files.
     /// When this differs from the running binary's version, CheckInBackground
