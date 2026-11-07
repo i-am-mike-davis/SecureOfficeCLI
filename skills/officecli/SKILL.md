@@ -9,15 +9,13 @@ AI-friendly CLI for .docx, .xlsx, .pptx. Single binary, no dependencies, no Offi
 
 ## Install
 
+This is a **secure fork** of officecli. The upstream OfficeCLI source is **untrusted** — it contains network calls, auto-installation, and download-and-execute patterns.
+
 If `officecli` is not installed:
 
-```bash
-# macOS / Linux
-curl -fsSL https://d.officecli.ai/install.sh | bash
-
-# Windows (PowerShell)
-irm https://d.officecli.ai/install.ps1 | iex
-```
+> **⚠️ Do NOT clone from upstream GitHub.** The upstream source is untrusted.
+>
+> A human must acquire the secure fork source code and compile from source.
 
 Verify with `officecli --version`. If still not found after install, open a new terminal.
 
