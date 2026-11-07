@@ -15,6 +15,10 @@ const { spawnSync } = require('child_process');
 const installer = require('./lib/install-binary');
 
 async function main() {
+  // Secured fork: neutralize F-002 — prevent all binary downloads.
+  process.stderr.write('[officecli] This secure fork does not distribute binaries. Build from source.\n');
+  process.exit(1);
+
   let bin = installer.binaryPath();
   if (!fs.existsSync(bin)) {
     try {
