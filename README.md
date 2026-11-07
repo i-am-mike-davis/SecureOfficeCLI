@@ -1,6 +1,7 @@
-# OfficeCLI
+# SecureOfficeCLI
 
 > **OfficeCLI is the world's first and the best Office suite designed for AI agents.**
+> **SecureOfficeCLI is a hardened security fork for offline work.**
 
 **Give any AI agent full control over Word, Excel, and PowerPoint — in one line of code.**
 
