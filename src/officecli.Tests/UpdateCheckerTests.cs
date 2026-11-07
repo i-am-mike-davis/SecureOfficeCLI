@@ -49,4 +49,21 @@ public class UpdateCheckerTests
         Assert.Contains("bool AutoUpdate { get; set; } = false;", source,
             StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void AppConfig_LogDefaultsToTrue()
+    {
+        // Security requirement: debug logging must be enabled by default
+        // so hardened-mode early returns are visible for troubleshooting.
+        // Test via source inspection (no runtime coupling needed).
+        var sourcePath = Path.GetFullPath(Path.Combine(
+            Path.GetDirectoryName(typeof(UpdateCheckerTests).Assembly.Location)!,
+            "..", "..", "..", "..", "officecli", "Core", "UpdateChecker.cs"));
+
+        var source = File.ReadAllText(sourcePath);
+
+        // Assert: Log property defaults to true
+        Assert.Contains("bool Log { get; set; } = true;", source,
+            StringComparison.Ordinal);
+    }
 }
