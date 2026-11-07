@@ -19,6 +19,12 @@ Please include:
 We aim to acknowledge reports within a reasonable timeframe and will coordinate
 a fix and disclosure with you.
 
+## Security Tests
+
+Automated tests verify security patches are in place. See
+[src/officecli.Tests/README.md](src/officecli.Tests/README.md) for test structure
+and execution commands.
+
 ## Supported Versions
 
 Security fixes are applied to the latest released version. Please upgrade to the

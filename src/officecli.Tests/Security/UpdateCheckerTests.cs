@@ -1,11 +1,13 @@
 using System;
 using System.IO;
 
-namespace OfficeCli.Core.Tests;
+namespace OfficeCli.Tests.Security;
 
 public class UpdateCheckerTests
 {
     [Fact]
+    [Trait("Category", "Security")]
+    [Trait("Component", "UpdateChecker")]
     public void CheckInBackground_HasHardenedEarlyReturn_BeforeDangerousCode()
     {
         // Security requirement: F-001 must be neutralized by an early return
@@ -34,6 +36,8 @@ public class UpdateCheckerTests
     }
 
     [Fact]
+    [Trait("Category", "Security")]
+    [Trait("Component", "UpdateChecker")]
     public void AppConfig_AutoUpdateDefaultsToFalse()
     {
         // Security requirement: new installations must start hardened.
@@ -51,6 +55,8 @@ public class UpdateCheckerTests
     }
 
     [Fact]
+    [Trait("Category", "Security")]
+    [Trait("Component", "UpdateChecker")]
     public void AppConfig_LogDefaultsToTrue()
     {
         // Security requirement: debug logging must be enabled by default

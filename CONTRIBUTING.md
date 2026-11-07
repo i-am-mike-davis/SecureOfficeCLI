@@ -6,6 +6,8 @@
 > docs are handled by the maintainer in post-merge cleanup — do not worry
 > about them.
 
+[Security Policy](./SECURITY.md)
+
 ## Rule 1: One PR = one atomic change
 
 A PR must contain exactly one feature or one bug fix that cannot be further
