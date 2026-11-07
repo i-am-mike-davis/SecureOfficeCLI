@@ -21,22 +21,16 @@ public class InstallBinaryTests
         // 1. The secured-fork message must exist
         Assert.Contains("does not distribute binaries", source);
 
-        // 2. The throw must appear BEFORE download logic
+        // 2. The guard must appear before the actual download call.
+        // await fetchToFile is the call that writes the remote binary to disk.
         var throwIndex = source.IndexOf("does not distribute binaries");
-        var downloadIndex = source.IndexOf("assetUrls");
-        var fetchToFileIndex = source.IndexOf("fetchToFile");
+        var awaitFetchIndex = source.IndexOf("await fetchToFile");
 
         Assert.True(throwIndex >= 0,
             "install-binary.js must contain secured-fork guard");
-        if (downloadIndex >= 0)
-        {
-            Assert.True(throwIndex < downloadIndex,
-                "Guard must appear before assetUrls download (F-002)");
-        }
-        if (fetchToFileIndex >= 0)
-        {
-            Assert.True(throwIndex < fetchToFileIndex,
-                "Guard must appear before fetchToFile download (F-002)");
-        }
+        Assert.True(awaitFetchIndex >= 0,
+            "install-binary.js must still contain await fetchToFile (preserved for rebase)");
+        Assert.True(throwIndex < awaitFetchIndex,
+            "Guard must appear before await fetchToFile download (F-002)");
     }
 }
