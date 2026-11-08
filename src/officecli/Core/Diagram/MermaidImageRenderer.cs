@@ -4,7 +4,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Net.Http;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -46,32 +46,8 @@ public sealed class MermaidSyntaxException : ArgumentException
 
 public static class MermaidImageRenderer
 {
-    // Pin a major version so cache + mirror + CDN agree and rendering is stable.
+    // Pin a major version so the bundled mermaid matches upstream releases.
     private const string MermaidVersion = "11";
-    // Own mirror first (offline-first, no third-party dependency at steady state),
-    // then the public CDN as a fallback.
-    private const string MirrorUrl =
-        "https://d.officecli.ai/assets/mermaid-" + MermaidVersion + ".min.js";
-    private const string CdnUrl =
-        "https://cdn.jsdelivr.net/npm/mermaid@" + MermaidVersion + "/dist/mermaid.min.js";
-
-    // ESM builds, used only when a style option (theme / layout / look) is set.
-    // The UMD global (mermaid.min.js above) does not render a source carrying a
-    // YAML `---` frontmatter block (run() marks it processed but emits no svg —
-    // verified headless), and ELK ships as an ESM-only layout package that must
-    // be registered via mermaid.registerLayoutLoaders. So a styled diagram is
-    // rendered by importing the ESM mermaid + (for elk) the ESM elk loader.
-    // These are NOT locally cached: the ESM build pulls dozens of relative
-    // ./chunks/*.mjs and cross-package deps (dayjs/khroma/dompurify), so a
-    // single-file cache cannot satisfy them — the page imports them live from
-    // the CDN. Offline styling would need a pre-bundled single-file ESM hosted
-    // on the mirror (future infra task); the plain UMD path stays offline.
-    private const string ElkVersion = "0.1";
-    private const string MermaidEsmUrl =
-        "https://cdn.jsdelivr.net/npm/mermaid@" + MermaidVersion + "/dist/mermaid.esm.min.mjs";
-    private const string ElkEsmUrl =
-        "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@" + ElkVersion
-        + "/dist/mermaid-layout-elk.esm.min.mjs";
 
     // Accepted style-option values. Kept in sync with schemas/help/*/diagram.json.
     private static readonly HashSet<string> Themes =
@@ -176,38 +152,18 @@ public static class MermaidImageRenderer
         return Regex.IsMatch(lead.Substring(0, end), @"layout:\s*elk\b", RegexOptions.IgnoreCase);
     }
 
-    private static string CacheDir => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".officecli", "cache");
-    private static string CachedJsPath => Path.Combine(CacheDir, $"mermaid-{MermaidVersion}.min.js");
+    /// <summary>Load the bundled mermaid.js from the embedded resource (F-006 bundling).</summary>
+    private static string? GetEmbeddedMermaidJs()
+    {
+        var asm = typeof(MermaidImageRenderer).Assembly;
+        using var stream = asm.GetManifestResourceStream("OfficeCli.Resources.js.mermaid-bundle.js");
+        if (stream == null) return null;
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
 
     /// <summary>True when any image backend is available: mmdc, or a chrome-family browser.</summary>
     public static bool IsAvailable() => TryLocateMmdc(out _) || HtmlScreenshot.HasChromeFamily();
-
-    /// <summary>
-    /// Daily-refresh hook, called from <see cref="UpdateChecker"/>'s once-per-24h
-    /// background process (already talking to the mirror). Revalidates an <b>already
-    /// cached</b> mermaid.js against the mirror with a conditional request and updates
-    /// it if the server's copy changed. Never pre-downloads (first-use owns that),
-    /// never blocks, never throws. Only the chrome backend uses this cache; mmdc ships
-    /// its own mermaid.
-    /// </summary>
-    public static void RefreshCacheIfPresent()
-    {
-        try
-        {
-            if (!File.Exists(CachedJsPath)) return; // refresh only what the user actually uses
-            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
-            using var req = new HttpRequestMessage(HttpMethod.Get, MirrorUrl);
-            req.Headers.IfModifiedSince = new DateTimeOffset(File.GetLastWriteTimeUtc(CachedJsPath));
-            using var resp = http.SendAsync(req).GetAwaiter().GetResult();
-            if (resp.StatusCode == System.Net.HttpStatusCode.NotModified) return; // unchanged → keep cache
-            if (!resp.IsSuccessStatusCode) return;                                 // mirror hiccup → keep cache
-            var bytes = resp.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
-            if (bytes.Length > 500_000)
-                File.WriteAllBytes(CachedJsPath, bytes);
-        }
-        catch { /* best effort — the existing cache stays usable */ }
-    }
 
     /// <summary>
     /// Render <paramref name="mermaid"/> to a temporary PNG file and return its path
@@ -350,12 +306,15 @@ public static class MermaidImageRenderer
     /// so mermaid's foreignObject labels — invisible to Office as SVG — appear.</summary>
     private static string RenderViaChrome(string mermaid, string? background)
     {
-        // A styled source (theme/layout/look frontmatter) is rendered by the ESM
-        // build (the UMD global does not render frontmatter, and elk is ESM-only);
-        // a plain source keeps the offline-cached UMD path unchanged.
+        // All rendering uses embedded mermaid.js bundle (F-006): no network calls.
+        var embeddedJs = GetEmbeddedMermaidJs();
+        if (embeddedJs == null)
+            throw new InvalidOperationException(
+                "mermaid.js bundle not found in embedded resources. "
+                + "Ensure the build process ran esbuild bundling (see officecli.csproj BundleJS target).");
         var html = SourceNeedsEsm(mermaid)
-            ? BuildHtmlEsm(mermaid, SourceNeedsElk(mermaid), SafeBackground(background))
-            : BuildHtml(mermaid, ResolveMermaidJsRef(), SafeBackground(background));
+            ? BuildHtmlEsm(mermaid, SourceNeedsElk(mermaid), embeddedJs, SafeBackground(background))
+            : BuildHtml(mermaid, embeddedJs, SafeBackground(background));
         var htmlPath = Path.Combine(Path.GetTempPath(), $"ocli_mmd_{Guid.NewGuid():N}.html");
         File.WriteAllText(htmlPath, html);
         try
@@ -392,36 +351,7 @@ public static class MermaidImageRenderer
         finally { try { File.Delete(htmlPath); } catch { /* best effort */ } }
     }
 
-    /// <summary>Cache → one-time download → live CDN. Returns a URL usable as a
-    /// &lt;script src&gt; (a <c>file://</c> for a cached/downloaded copy, else the CDN).</summary>
-    private static string ResolveMermaidJsRef()
-    {
-        try
-        {
-            if (File.Exists(CachedJsPath) && new FileInfo(CachedJsPath).Length > 500_000)
-                return new Uri(CachedJsPath).AbsoluteUri;
-
-            Directory.CreateDirectory(CacheDir);
-            foreach (var url in new[] { MirrorUrl, CdnUrl }) // mirror first, CDN fallback
-            {
-                try
-                {
-                    using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-                    var bytes = http.GetByteArrayAsync(url).GetAwaiter().GetResult();
-                    if (bytes.Length > 500_000)
-                    {
-                        File.WriteAllBytes(CachedJsPath, bytes);
-                        return new Uri(CachedJsPath).AbsoluteUri;
-                    }
-                }
-                catch { /* try next source */ }
-            }
-        }
-        catch { /* fall through to live CDN */ }
-        return CdnUrl; // every download failed → reference the CDN directly in the page
-    }
-
-    private static string BuildHtml(string mermaid, string jsRef, string background)
+    private static string BuildHtml(string mermaid, string embeddedJs, string background)
     {
         // Pass the source as base64 so no mermaid character can break out of the
         // HTML/JS context. Render explicitly (startOnLoad:false + mermaid.run) and
@@ -434,8 +364,8 @@ public static class MermaidImageRenderer
             // screenshot window then clips those few pixels → the diagram's bottom edge
             // (e.g. a sequence diagram's bottom actor boxes) gets cut. block removes it.
             + "<style>html,body{margin:0;padding:0;background:" + background + ";font-size:0}"
-            + "#d{display:inline-block}#d svg{display:block}</style>"
-            + $"<script src=\"{jsRef}\"></script></head>"
+            + "#d{display:inline-block}#d svg{display:block}</style></head>"
+            + $"<script>{embeddedJs}</script></head>"
             // Hidden sink for a failure message. mermaid's parse error is multi-line
             // with an aligned caret ('^') under the offending column; document.title
             // would flatten the newlines and misalign the caret, so carry the verbatim
@@ -487,29 +417,23 @@ public static class MermaidImageRenderer
     }
 
     /// <summary>
-    /// ESM variant of <see cref="BuildHtml"/> for a styled source: imports the ESM
-    /// mermaid build (which, unlike the UMD global, renders a frontmatter-carrying
-    /// source) and, when the source selects ELK, the ESM elk loader — registered
-    /// via <c>registerLayoutLoaders</c> before init. Same title/mmderr/getBBox
-    /// contract as BuildHtml so the DOM-dump reader is unchanged. Assets load live
-    /// from the CDN (see the ESM-url comment above); on failure the title stays
-    /// unset → the host treats it as an infra failure and falls back to native.
+    /// ESM variant of <see cref="BuildHtml"/> for a styled source: uses the bundled
+    /// mermaid.js (IIFE) which renders frontmatter-carrying sources. When the source
+    /// selects ELK layout, the bundled mermaid includes ELK support via registered
+    /// layout loaders. Same title/mmderr/getBBox contract as BuildHtml.
     /// </summary>
-    private static string BuildHtmlEsm(string mermaid, bool needsElk, string background)
+    private static string BuildHtmlEsm(string mermaid, bool needsElk, string embeddedJs, string background)
     {
         var b64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(mermaid));
-        var elkImport = needsElk
-            ? $"const elk=(await import(\"{ElkEsmUrl}\")).default;mermaid.registerLayoutLoaders(elk);"
-            : "";
+        // The bundled IIFE exposes mermaid globally; no ESM import needed.
         return
             "<!DOCTYPE html><html><head><meta charset=\"utf-8\">"
             + "<style>html,body{margin:0;padding:0;background:" + background + ";font-size:0}"
             + "#d{display:inline-block}#d svg{display:block}</style></head>"
             + "<body><pre id=\"mmderr\" style=\"display:none\"></pre>"
-            + "<div id=\"d\" class=\"mermaid\"></div><script type=\"module\">"
-            + "try{"
-            + $"const mermaid=(await import(\"{MermaidEsmUrl}\")).default;"
-            + elkImport
+            + "<div id=\"d\" class=\"mermaid\"></div><script>"
+            + embeddedJs
+            + "window.__mermaidReady=true;"
             + "const src=new TextDecoder().decode(Uint8Array.from(atob(\"" + b64 + "\"),c=>c.charCodeAt(0)));"
             + "document.getElementById('d').textContent=src;"
             + "mermaid.initialize({startOnLoad:false,securityLevel:'loose',htmlLabels:false,"

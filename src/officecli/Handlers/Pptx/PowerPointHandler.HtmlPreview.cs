@@ -116,9 +116,9 @@ public partial class PowerPointHandler
         bool hasMathFormulas = slideParts.Any(sp => sp.Slide?.Descendants<DocumentFormat.OpenXml.Math.OfficeMath>().Any() == true);
         if (hasMathFormulas)
         {
-            // CONSISTENCY(katex-mirror): mirror-first with CDN fallback chain — see Core/KatexAssets.
-            sb.AppendLine($"<link rel=\"stylesheet\" href=\"{Core.KatexAssets.CssUrl}\" media=\"print\" onload=\"this.media='all'\" onerror=\"{Core.KatexAssets.CssOnErrorJs}\">");
-            sb.AppendLine($"<script defer src=\"{Core.KatexAssets.JsUrl}\" onerror=\"{Core.KatexAssets.JsOnErrorJs("document.querySelectorAll('.katex-formula').forEach(function(el){el.textContent=el.dataset.formula;el.style.fontFamily='monospace';el.style.color='#666'})")}\"></script>");
+            // F-006: KaTeX loaded from embedded resources (no CDN/mirror).
+            sb.AppendLine($"<style>{Core.KatexAssets.CssInline}</style>");
+            sb.AppendLine($"<script defer>{Core.KatexAssets.JsInline}</script>");
         }
         // Three.js for 3D model rendering (graceful degradation: shows placeholder when offline).
         // CONSISTENCY(katex-mirror): mirror-first importmap; CDN fallback lives at the
@@ -282,10 +282,11 @@ public partial class PowerPointHandler
 })();"
             // CONSISTENCY(katex-mirror): the verbatim block above can't interpolate;
             // substitute the KaTeX asset URLs (mirror + CDN fallback) afterwards.
-            .Replace("{{KATEX_CSS}}", Core.KatexAssets.CssUrl)
-            .Replace("{{KATEX_CSS_CDN}}", Core.KatexAssets.CdnCssUrl)
-            .Replace("{{KATEX_JS}}", Core.KatexAssets.JsUrl)
-            .Replace("{{KATEX_JS_CDN}}", Core.KatexAssets.CdnJsUrl));
+            // F-006: KaTeX loaded from embedded resources (no CDN/mirror).
+            .Replace("{{KATEX_CSS}}", $"data:text/css;base64,{Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Core.KatexAssets.CssInline))}")
+            .Replace("{{KATEX_CSS_CDN}}", "")
+            .Replace("{{KATEX_JS}}", $"data:application/javascript;base64,{Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Core.KatexAssets.JsInline))}")
+            .Replace("{{KATEX_JS_CDN}}", ""));
         sb.AppendLine("</script>");
         sb.AppendLine("</body>");
         sb.AppendLine("</html>");
