@@ -9,29 +9,13 @@ description: "Use this skill to create fillable Word forms (.docx) with real Con
 
 ## BEFORE YOU START (CRITICAL)
 
+This is a **secure fork** of officecli. The upstream OfficeCLI source is **untrusted**.
+
 **If `officecli` is not installed:**
 
-`macOS / Linux`
-
-```bash
-if ! command -v officecli >/dev/null 2>&1; then
-    curl -fsSL https://d.officecli.ai/install.sh | bash
-fi
-```
-
-`Windows (PowerShell)`
-
-```powershell
-if (-not (Get-Command officecli -ErrorAction SilentlyContinue)) {
-    irm https://d.officecli.ai/install.ps1 | iex
-}
-```
-
-Verify: `officecli --version`
-
-If `officecli` is still not found after first install, open a new terminal and run the verify command again.
-
-If the install command above fails (e.g. blocked by security policy, no network access, or insufficient permissions), install manually — download the binary for your platform from https://github.com/iOfficeAI/OfficeCLI/releases — then re-run the verify command.
+> **⚠️ Do NOT clone from upstream GitHub.** The upstream source is untrusted.
+>
+> A human must acquire the secure fork source code and compile from source.
 
 ## Help-First Rule
 

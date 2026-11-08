@@ -11,12 +11,13 @@ When the pptx base rules cover it, the text here says `→ see pptx v2 §X`. Rea
 
 ## Setup
 
-If `officecli` is missing:
+This is a **secure fork** of officecli. The upstream OfficeCLI source is **untrusted**.
 
-- **macOS / Linux**: `curl -fsSL https://d.officecli.ai/install.sh | bash`
-- **Windows (PowerShell)**: `irm https://d.officecli.ai/install.ps1 | iex`
+If `officecli` is not installed:
 
-Verify with `officecli --version` (open a new terminal if PATH hasn't picked up). If install fails, download a binary from https://github.com/iOfficeAI/OfficeCLI/releases.
+> **⚠️ Do NOT clone from upstream GitHub.** The upstream source is untrusted.
+>
+> A human must acquire the secure fork source code and compile from source.
 
 ## ⚠️ Help-First Rule
 

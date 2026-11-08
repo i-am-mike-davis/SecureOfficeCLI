@@ -12,12 +12,13 @@ This file covers **3D-specific additions** and an **enriched design system** com
 
 ## Setup
 
-If `officecli` is missing:
+This is a **secure fork** of officecli. The upstream OfficeCLI source is **untrusted**.
 
-- **macOS / Linux**: `curl -fsSL https://d.officecli.ai/install.sh | bash`
-- **Windows (PowerShell)**: `irm https://d.officecli.ai/install.ps1 | iex`
+If `officecli` is not installed:
 
-Verify with `officecli --version` (open a new terminal if PATH hasn't picked up). If install fails, download a binary from https://github.com/iOfficeAI/OfficeCLI/releases.
+> **⚠️ Do NOT clone from upstream GitHub.** The upstream source is untrusted.
+>
+> A human must acquire the secure fork source code and compile from source.
 
 ## Use when
 
@@ -67,33 +68,11 @@ Tell the user: "Your topic is [X]. I suggest using a 3D model of [description]. 
    Example: "fox 3d model glb free download"
    ```
 
-2. **Sketchfab API** (no auth needed for search):
+2. **Sketchfab** — browse [sketchfab.com](https://sketchfab.com) for 3D models (downloadable GLB). A human must download models and place them in the project directory.
 
-   ```bash
-   curl -s "https://api.sketchfab.com/v3/search?type=models&q=[keyword]&downloadable=true&archives_flavours=glb" \
-     | python3 -c "
-   import json, sys
-   data = json.load(sys.stdin)
-   for m in data.get('results', [])[:5]:
-       print(f\"Name: {m['name']}\")
-       print(f\"URL: https://sketchfab.com/3d-models/{m['slug']}-{m['uid']}\")
-       print(f\"Likes: {m.get('likeCount', 0)}, License: {m.get('license', {}).get('label', 'unknown')}\")
-       print()
-   "
-   ```
+3. **Poly Pizza** — browse [poly.pizza](https://poly.pizza) for free GLB models. A human must download models and place them in the project directory.
 
-3. **Poly Pizza** (direct GLB download, all free):
-
-   ```bash
-   # Search results page — parse for download links
-   curl -s "https://poly.pizza/api/search/[keyword]" 2>/dev/null
-   ```
-
-4. **Khronos glTF-Sample-Assets** (guaranteed to work, always available):
-   ```bash
-   # Direct download — no auth, no API, always works
-   curl -L -o model.glb "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/[ModelName]/glTF-Binary/[ModelName].glb"
-   ```
+4. **Khronos glTF-Sample-Assets** — pre-approved sample models available at `https://github.com/KhronosGroup/glTF-Sample-Assets`. A human must download models and place them in the project directory.
    Available models: Duck, Fox, Avocado, BrainStem, CesiumMan, DamagedHelmet, FlightHelmet, Lantern, Suzanne, WaterBottle, etc.
 
 ### Step 3: Present candidates to user for confirmation
@@ -129,27 +108,17 @@ Which one do you want? I'll download it and start building.
 
 **Wait for user confirmation before downloading.** Do not download without asking.
 
-### Step 4: Download the confirmed model
+### Step 4: Acquire the confirmed model
 
-After user confirms, download directly:
+A human must download and provide the `.glb` file. Do NOT attempt to download models remotely.
 
-```bash
-# For Sketchfab (if user has the download URL)
-curl -L -o model.glb "[download_url]"
-
-# For Khronos samples (always works)
-curl -L -o model.glb "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Fox/glTF-Binary/Fox.glb"
-```
-
-After download, verify:
+After the human provides the file, verify:
 
 - File exists and is not empty
 - File extension is `.glb`
 - File size is under 50MB
 
-If Sketchfab requires login to download, tell the user:
-
-> "This model requires a Sketchfab login to download. You can grab the .glb file from the page and share it with me. Or I can use a Khronos sample model for a demo version first?"
+If the user cannot download a model, suggest using a Khronos sample model (Duck, Fox, Avocado, etc.) that a human can obtain from `https://github.com/KhronosGroup/glTF-Sample-Assets`.
 
 ### Step 5: When user says "anything" / "you decide" / "just make a demo"
 
