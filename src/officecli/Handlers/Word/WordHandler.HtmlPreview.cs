@@ -215,6 +215,10 @@ public partial class WordHandler
                 sb.Append(fontFaces);
                 sb.AppendLine("</style>");
             }
+            // F-006: web font loading disabled — no external resource downloads.
+            // Local @font-face blocks above provide layout stability; missing
+            // fonts fall back to system defaults (no-JS degradation).
+#if false
             // Web-font loading: detect-then-inject, one request per family.
             //
             // Local-first: a font that resolves locally must NOT be replaced by
@@ -269,6 +273,7 @@ public partial class WordHandler
                 sb.AppendLine("document.head.appendChild(l);});");
                 sb.AppendLine("})();</script>");
             }
+#endif
         }
         // KaTeX for math rendering — only include when the document actually has formulas.
         // Same non-blocking load trick so KaTeX CSS can never stall first paint.
