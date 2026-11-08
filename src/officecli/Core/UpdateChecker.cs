@@ -111,6 +111,12 @@ internal static class UpdateChecker
     /// </summary>
     internal static void RunRefresh()
     {
+        // Hardened mode: neutralize F-001 (self-update download-and-execute).
+        // This early return blocks the entire update pipeline — no HTTP,
+        // no download, no binary swap — regardless of config settings.
+        CliLogger.LogError("self-update disabled (hardened)");
+        return;
+
         if (Environment.GetEnvironmentVariable("OFFICECLI_SKIP_UPDATE") == "1")
             return;
 

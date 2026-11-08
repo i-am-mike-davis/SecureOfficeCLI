@@ -111,15 +111,15 @@ public class UpdateCheckerTests
 
         // 2. The hardened return must appear BEFORE dangerous code in RunRefresh()
         var hardenedIndex = runRefreshBody.IndexOf("self-update disabled (hardened)");
-        var spawnIndex = runRefreshBody.IndexOf("SpawnRefreshProcess");
+        var httpClientIndex = runRefreshBody.IndexOf("new HttpClient");
         var downloadIndex = runRefreshBody.IndexOf("GetStreamAsync");
-        var applyPendingIndex = runRefreshBody.IndexOf("ApplyPendingUpdate");
+        var fileMoveIndex = runRefreshBody.IndexOf("File.Move");
 
-        Assert.True(hardenedIndex < spawnIndex,
-            "Hardened return must appear before SpawnRefreshProcess (F-001)");
+        Assert.True(hardenedIndex < httpClientIndex,
+            "Hardened return must appear before HttpClient creation (F-001)");
         Assert.True(hardenedIndex < downloadIndex,
             "Hardened return must appear before GetStreamAsync download (F-001)");
-        Assert.True(hardenedIndex < applyPendingIndex,
-            "Hardened return must appear before ApplyPendingUpdate (F-001)");
+        Assert.True(hardenedIndex < fileMoveIndex,
+            "Hardened return must appear before File.Move binary swap (F-001)");
     }
 }
