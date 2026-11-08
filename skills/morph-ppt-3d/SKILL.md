@@ -108,27 +108,17 @@ Which one do you want? I'll download it and start building.
 
 **Wait for user confirmation before downloading.** Do not download without asking.
 
-### Step 4: Download the confirmed model
+### Step 4: Acquire the confirmed model
 
-After user confirms, download directly:
+A human must download and provide the `.glb` file. Do NOT attempt to download models remotely.
 
-```bash
-# For Sketchfab (if user has the download URL)
-curl -L -o model.glb "[download_url]"
-
-# For Khronos samples (always works)
-curl -L -o model.glb "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/Fox/glTF-Binary/Fox.glb"
-```
-
-After download, verify:
+After the human provides the file, verify:
 
 - File exists and is not empty
 - File extension is `.glb`
 - File size is under 50MB
 
-If Sketchfab requires login to download, tell the user:
-
-> "This model requires a Sketchfab login to download. You can grab the .glb file from the page and share it with me. Or I can use a Khronos sample model for a demo version first?"
+If the user cannot download a model, suggest using a Khronos sample model (Duck, Fox, Avocado, etc.) that a human can obtain from `https://github.com/KhronosGroup/glTF-Sample-Assets`.
 
 ### Step 5: When user says "anything" / "you decide" / "just make a demo"
 

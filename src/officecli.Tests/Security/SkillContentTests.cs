@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace OfficeCli.Tests.Security;
 
@@ -65,12 +66,15 @@ public class SkillContentTests
                 continue;
 
             var content = File.ReadAllText(file);
-            var patterns = new[] { "curl", "wget", "irm " };
+            // Match as standalone commands, not substrings of words like "confirm" or "curly"
+            var patterns = new[] { @"\bcurl\b", @"\bwget\b", @"\birm\b" };
             foreach (var pattern in patterns)
             {
-                if (content.IndexOf(pattern, StringComparison.OrdinalIgnoreCase) >= 0)
+                if (Regex.IsMatch(content, pattern, RegexOptions.IgnoreCase))
                 {
-                    violations.Add((file, pattern));
+                    // Extract the actual matched token for reporting
+                    var match = Regex.Match(content, pattern, RegexOptions.IgnoreCase);
+                    violations.Add((file, match.Value));
                 }
             }
         }
