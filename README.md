@@ -644,11 +644,17 @@ The [Wiki](https://github.com/iOfficeAI/OfficeCLI/wiki) has detailed guides for 
 
 ## Build from Source
 
-Requires [.NET 10 SDK](https://dotnet.microsoft.com/download) for compilation only. The output is a self-contained, native binary -- .NET is embedded in the binary and is not needed at runtime.
+Requires:
+- [.NET 10 SDK](https://dotnet.microsoft.com/download) for compilation
+- [pnpm](https://pnpm.io/) (v12+) for JS library bundling
+
+The output is a self-contained, native binary -- .NET is embedded in the binary and is not needed at runtime.
 
 ```bash
 ./build.sh
 ```
+
+The build script automatically installs JS dependencies (mermaid, KaTeX, Three.js), bundles them, and compiles for all supported platforms. Binaries are written to `bin/`.
 
 ## License
 
