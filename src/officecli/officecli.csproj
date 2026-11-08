@@ -49,6 +49,24 @@
     <EmbeddedResource Remove="../../skills/**/*.glb" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <!-- JS bundles for F-006: eliminate CDN dependency for diagram/math/3D rendering -->
+    <EmbeddedResource Include="../../js/mermaid-bundle.js" LogicalName="OfficeCli.Resources.js.mermaid-bundle.js" />
+    <EmbeddedResource Include="../../js/katex-bundle.js" LogicalName="OfficeCli.Resources.js.katex-bundle.js" />
+    <EmbeddedResource Include="../../js/three-bundle.js" LogicalName="OfficeCli.Resources.js.three-bundle.js" />
+    <!-- KaTeX CSS for F-006: embedded so no CDN/font requests needed -->
+    <EmbeddedResource Include="../../js/node_modules/katex/dist/katex.min.css" LogicalName="OfficeCli.Resources.css.katex.min.css" />
+  </ItemGroup>
+
+  <!-- Bundle JS libraries before build: pnpm install + esbuild bundling -->
+  <Target Name="BundleJS" BeforeTargets="BeforeBuild">
+    <Exec Command="pnpm install" WorkingDirectory="../../js" />
+    <Exec Command="pnpm exec esbuild --bundle --outfile=mermaid-bundle.js --format=iife --global-name=mermaid mermaid" WorkingDirectory="../../js" />
+    <Exec Command="pnpm exec esbuild --bundle --outfile=katex-bundle.js --format=iife --global-name=katex katex" WorkingDirectory="../../js" />
+    <Exec Command="pnpm exec esbuild --bundle --outfile=three-bundle.js --format=iife --global-name=THREE three" WorkingDirectory="../../js" />
+  </Target>
+
   <!-- Embed help schemas into the assembly so SchemaHelpLoader can read
        them via Assembly.GetManifestResourceStream — no on-disk extraction
        required (single-file installer ships only the .exe). -->

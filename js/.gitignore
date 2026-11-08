@@ -1,0 +1,2 @@
+# Ignore node_modules but keep package.json, pnpm-lock.yaml, and bundles
+node_modules/

@@ -118,11 +118,7 @@ internal static class UpdateChecker
         {
             var config = LoadConfig();
 
-            // Piggyback the diagram render's mermaid.js cache refresh on this daily
-            // background pass (we're already once-per-24h and already reaching the
-            // mirror). Only revalidates an existing cache; independent of the binary
-            // update below, so it runs even for package-managed (Homebrew) installs.
-            try { Diagram.MermaidImageRenderer.RefreshCacheIfPresent(); } catch { /* best effort */ }
+            // mermaid.js is now embedded (F-006): no cache refresh needed.
 
             var currentVersion = GetCurrentVersion();
             if (currentVersion == null) return;

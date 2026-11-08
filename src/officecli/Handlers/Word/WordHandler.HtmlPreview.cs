@@ -275,9 +275,9 @@ public partial class WordHandler
         bool hasMathFormulas = body.Descendants<M.OfficeMath>().Any();
         if (hasMathFormulas)
         {
-            // CONSISTENCY(katex-mirror): mirror-first with CDN fallback chain — see Core/KatexAssets.
-            sb.AppendLine($"<link rel=\"stylesheet\" href=\"{Core.KatexAssets.CssUrl}\" media=\"print\" onload=\"this.media='all'\" onerror=\"{Core.KatexAssets.CssOnErrorJs}\">");
-            sb.AppendLine($"<script defer src=\"{Core.KatexAssets.JsUrl}\" onerror=\"{Core.KatexAssets.JsOnErrorJs("document.querySelectorAll('.katex-formula').forEach(function(el){el.textContent=el.dataset.formula;el.style.fontFamily='monospace';el.style.color='#666'})")}\"></script>");
+            // F-006: KaTeX loaded from embedded resources (no CDN/mirror).
+            sb.AppendLine($"<style>{Core.KatexAssets.CssInline}</style>");
+            sb.AppendLine($"<script defer>{Core.KatexAssets.JsInline}</script>");
         }
         sb.AppendLine("</head>");
         sb.AppendLine("<body>");
@@ -1329,12 +1329,12 @@ public partial class WordHandler
   }
   window._wordPaginate=function(){renderNewContent();setTimeout(paginate,0);};
 "
-            // CONSISTENCY(katex-mirror): the verbatim block above can't interpolate;
-            // substitute the KaTeX asset URLs (mirror + CDN fallback) afterwards.
-            .Replace("{{KATEX_CSS}}", Core.KatexAssets.CssUrl)
-            .Replace("{{KATEX_CSS_CDN}}", Core.KatexAssets.CdnCssUrl)
-            .Replace("{{KATEX_JS}}", Core.KatexAssets.JsUrl)
-            .Replace("{{KATEX_JS_CDN}}", Core.KatexAssets.CdnJsUrl));
+            // F-006: KaTeX loaded from embedded resources (no CDN/mirror).
+            // Replace the dynamic loader block with inline embedded resources.
+            .Replace("{{KATEX_CSS}}", $"data:text/css;base64,{Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Core.KatexAssets.CssInline))}")
+            .Replace("{{KATEX_CSS_CDN}}", "")
+            .Replace("{{KATEX_JS}}", $"data:application/javascript;base64,{Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Core.KatexAssets.JsInline))}")
+            .Replace("{{KATEX_JS_CDN}}", ""));
         // Responsive scaling: shrink pages to fit viewport (like PPT's scaleSlides)
         sb.AppendLine(@"  function scalePages(animate){
     var bs=getComputedStyle(document.body);
